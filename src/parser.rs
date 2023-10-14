@@ -68,7 +68,8 @@ pub fn resolve_expr(
     type_value: &String,
     mut variables: &mut BTreeMap<String, (String, u16)>,
     output: &mut String,
-    count: &mut u64,
+    count_mul: &mut u64,
+    count_div: &mut u64,
 ) -> Result<()> {
     let ident = ident.clone();
     let type_value = type_value.clone();
@@ -94,7 +95,8 @@ pub fn resolve_expr(
                         &type_value,
                         &mut variables,
                         output,
-                        count,
+                        count_mul,
+                        count_div,
                     )?;
 
                     r
@@ -105,26 +107,27 @@ pub fn resolve_expr(
                 Expr::Value(value) => set_number(&value, &type_value, &mut variables),
                 Expr::Variable(ident) => ident,
                 Expr::BinOp { lhs, op, rhs } => {
-                  let r = String::from("R");
+                    let r = String::from("R");
 
-                  resolve_expr(
-                      Expr::BinOp { lhs, op, rhs },
-                      &r,
-                      &type_value,
-                      &mut variables,
-                      output,
-                      count,
-                  )?;
+                    resolve_expr(
+                        Expr::BinOp { lhs, op, rhs },
+                        &r,
+                        &type_value,
+                        &mut variables,
+                        output,
+                        count_mul,
+                        count_div,
+                    )?;
 
-                  r
-              }
+                    r
+                }
             };
 
             let result = match op {
                 Op::Add => add(&lhs, &rhs),
                 Op::Subtract => subtract(&lhs, &rhs),
-                Op::Multiply => multiply(&lhs, &rhs, count),
-                Op::Divide => return Err(anyhow!("Unsupported operator")),
+                Op::Multiply => multiply(&lhs, &rhs, count_mul),
+                Op::Divide => divide(&lhs, &rhs, count_div),
             };
 
             output.push_str(&result);
@@ -146,10 +149,13 @@ fn set_number(
 }
 
 const DEFAULT_VALUE: u16 = 0;
-static DEFAULT_VARIABLES: [(&str, &str, u16); 3] = [
+static DEFAULT_VARIABLES: [(&str, &str, u16); 6] = [
     ("COUNT", "DEC", DEFAULT_VALUE),
     ("ONE", "DEC", 1),
     ("R", "DEC", DEFAULT_VALUE),
+    ("K", "DEC", DEFAULT_VALUE),
+    ("J", "DEC", DEFAULT_VALUE),
+    ("POW", "DEC", DEFAULT_VALUE),
 ];
 
 fn multiply(a: &String, b: &String, count: &mut u64) -> String {
@@ -177,8 +183,54 @@ fn subtract(a: &String, b: &String) -> String {
     format!("\nLOAD {a}\nSUBT {b}\n")
 }
 
+fn divide(a: &String, b: &String, count: &mut u64) -> String {
+    let value = format!(
+        "CLEAR\nSTORE J\nSTORE POW\nLOAD {a}\nSTORE K\nCLEAR
+    
+OUTER_{count}, LOAD K
+    SKIPCOND 800
+    JUMP DONE_{count}
+    LOAD ONE
+    STORE POW
+    LOAD {b}
+    STORE J
+    
+INNER_{count}, LOAD J
+    ADD J
+    SUBT K
+    SKIPCOND 000
+    JUMP AFTIN_{count}
+    LOAD J
+    ADD J
+    STORE J
+    LOAD POW
+    ADD POW
+    STORE POW
+    JUMP INNER_{count}
+    
+AFTIN_{count}, LOAD K
+    SUBT J
+    STORE K
+    LOAD R
+    ADD POW
+    STORE R
+    JUMP OUTER_{count}
+    
+DONE_{count}, LOAD K
+    SKIPCOND 000
+    JUMP DISP_{count}
+    LOAD R
+    SUBT ONE
+
+DISP_{count}, LOAD R\n\n"
+    );
+    *count += 1;
+    value
+}
+
 pub fn generate(code: &str) -> Result<String> {
-    let mut count = 1;
+    let mut count_mul = 1;
+    let mut count_div = 1;
     let mut variables: BTreeMap<String, (String, u16)> = BTreeMap::new();
     let mut output = String::new();
 
@@ -216,14 +268,16 @@ pub fn generate(code: &str) -> Result<String> {
                     }
                     Rule::expr => {
                         let expr = parse_expr(value_pair.into_inner());
-                        output.push_str("\nCLEAR\nSTORE R\n");
+                        output.push_str("CLEAR\nSTORE R\n\n");
+
                         resolve_expr(
                             expr,
                             &ident,
                             &type_value,
                             &mut variables,
                             &mut output,
-                            &mut count
+                            &mut count_mul,
+                            &mut count_div,
                         )?;
 
                         variables.insert(ident, (type_value, DEFAULT_VALUE));
