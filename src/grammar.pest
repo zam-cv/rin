@@ -1,16 +1,10 @@
-// grammar.pest
-
-// La regla principal que intenta hacer match con todo el input
-program = _{ SOI ~ statement* ~ EOI }
-
-// Define una declaración de variable como la palabra "var", seguida de un identificador y un número
-statement = { "var" ~ ident ~ "=" ~ number ~ ";" }
-
-// Identificadores son secuencias de caracteres alfabéticos
+program = _{ SOI ~ ( statement | function_call ~ ";" )* ~ EOI }
+statement = { "var" ~ ident ~ ":" ~ type ~ "=" ~ (number | function_call) ~ ";" }
+reassignment = { ident ~ "=" ~ (number | function_call) ~ ";" }
+type = { "HEX" | "DEC" | "BIN" }
+function_call = { ident ~ "(" ~ parameter* ~ ")" }
+parameter = { ASCII_ALPHA+ }
 ident = @{ ASCII_ALPHA+ }
-
-// Números son secuencias de dígitos
 number = @{ ASCII_DIGIT+ }
-
-// Ignora los espacios en blanco entre los tokens
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+NEWLINE = _{ "\r\n" | "\n" }

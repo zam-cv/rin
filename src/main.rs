@@ -16,7 +16,7 @@ fn program() -> Result<()> {
             let current_dir = std::env::current_dir()?;
             let file = current_dir.join(file);
             let code = fs::read_to_string(file)?;
-            let parsed = generate(&code);
+            let parsed = generate(&code)?;
             let mut file = fs::File::create(output)?;
             file.write_all(parsed.as_bytes())?;
         }

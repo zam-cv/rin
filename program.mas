@@ -1,0 +1,17 @@
+INPUT
+STORE a
+CLEAR
+INPUT
+STORE b
+CLEAR
+
+LOAD a
+OUTPUT
+
+HALT
+
+a,   DEC 0
+numVap,   DEC 20
+numUH,   DEC 30
+b,   DEC 0
+numVar,   DEC 10
