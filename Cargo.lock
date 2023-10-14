@@ -306,6 +306,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colored",
+ "lazy_static",
  "pest",
  "pest_derive",
 ]

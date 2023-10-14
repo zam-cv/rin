@@ -1,17 +1,61 @@
 INPUT
 STORE a
 CLEAR
-INPUT
-STORE b
+
 CLEAR
+STORE R
 
 LOAD a
+ADD N7
+STORE d
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD d
+ADD N9
+STORE R
+CLEAR
+
+LOAD R
+SUBT N5
+STORE c
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD c
+STORE COUNT
+
+LOOP_1,	LOAD R
+    ADD N5
+    STORE R
+           
+    LOAD COUNT
+    SUBT ONE
+    STORE COUNT
+            
+    SKIPCOND 400
+    JUMP LOOP_1
+
+LOAD R
+STORE p
+CLEAR
+
+LOAD p
 OUTPUT
 
 HALT
 
+COUNT,   DEC 0
+N5,   DEC 5
+N7,   DEC 7
+N9,   DEC 9
+ONE,   DEC 1
+R,   DEC 0
 a,   DEC 0
-numVap,   DEC 20
-numUH,   DEC 30
-b,   DEC 0
-numVar,   DEC 10
+c,   DEC 0
+d,   DEC 0
+p,   DEC 0

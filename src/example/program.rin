@@ -1,7 +1,6 @@
 var a: DEC = input();
-var b: DEC = input();
-var numVar: DEC = 10;
-var numVap: DEC = 20;
-var numUH: DEC = 30;
+var d: DEC = a + 7;
+var c: DEC = d + 9 - 5;
+var p: DEC = c * 5;
 
-print(a);
+print(p);

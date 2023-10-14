@@ -1,10 +1,19 @@
-program = _{ SOI ~ ( statement | function_call ~ ";" )* ~ EOI }
-statement = { "var" ~ ident ~ ":" ~ type ~ "=" ~ (number | function_call) ~ ";" }
-reassignment = { ident ~ "=" ~ (number | function_call) ~ ";" }
+program = _{ SOI ~ (( statement | function_call ) ~ ";" )* ~ EOI }
+statement = { "var" ~ ident ~ ":" ~ type ~ "=" ~ (function_call | expr) }
+
+expr = { atom ~ (bin_op ~ atom)* }
+atom = _{ integer | ident }
+bin_op = _{ add | subtract | multiply | divide }
+    add = { "+" }
+    subtract = { "-" }
+    multiply = { "*" }
+    divide = { "/" }
+
 type = { "HEX" | "DEC" | "BIN" }
-function_call = { ident ~ "(" ~ parameter* ~ ")" }
+function_call = { ident ~ "(" ~ parameter? ~ ("," ~ parameter)* ~ ")" }
 parameter = { ASCII_ALPHA+ }
-ident = @{ ASCII_ALPHA+ }
-number = @{ ASCII_DIGIT+ }
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHA | ASCII_DIGIT)* }
+integer = @{ ASCII_DIGIT+ }
+
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 NEWLINE = _{ "\r\n" | "\n" }
