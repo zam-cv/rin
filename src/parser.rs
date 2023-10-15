@@ -47,6 +47,7 @@ pub fn resolve_instructions(
     output: &mut String,
     count_mul: &mut u64,
     count_div: &mut u64,
+    functions: &mut BTreeMap<String, String>,
 ) -> Result<()> {
     for pair in parsed {
         match pair.as_rule() {
@@ -68,17 +69,6 @@ pub fn resolve_instructions(
                 let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
 
                 match value_pair.as_rule() {
-                    Rule::deref => {
-                        let mut inner = value_pair.into_inner();
-
-                        let ptr_name = inner
-                            .next()
-                            .ok_or_else(|| anyhow!("Missing identifier"))?
-                            .as_str()
-                            .to_string();
-
-                        output.push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
-                    }
                     Rule::expr => {
                         let expr = parse_expr(value_pair.into_inner());
                         output.push_str("CLEAR\nSTORE R\n");
@@ -107,7 +97,36 @@ pub fn resolve_instructions(
                 assign(pair, variables, output, count_mul, count_div, STOREI)?;
             }
             Rule::while_loop => {
-                while_loop(pair, variables, output, count_mul, count_div)?;
+                while_loop(pair, variables, output, count_mul, count_div, functions)?;
+            }
+            Rule::function => {
+                let mut inner = pair.into_inner();
+
+                let ident = inner
+                    .next()
+                    .ok_or_else(|| anyhow!("Missing identifier"))?
+                    .as_str();
+
+                let mut block_output = String::new();
+
+                resolve_instructions(
+                    inner,
+                    variables,
+                    &mut block_output,
+                    count_mul,
+                    count_div,
+                    functions,
+                )?;
+
+                let tab = block_output
+                    .lines()
+                    .map(|line| format!("\t{}", line))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                let mut func = String::new();
+                func.push_str(&format!("{ident},\tHEX     000\n{tab}\n\tJumpI   {ident}"));
+                functions.insert(ident.to_string(), func);
             }
             Rule::function_call => {
                 let mut inner = pair.into_inner();
@@ -117,16 +136,18 @@ pub fn resolve_instructions(
                     .ok_or_else(|| anyhow!("Missing identifier"))?
                     .as_str();
 
-                let params = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing parameters"))?
-                    .as_str();
-
                 match ident {
                     "print" => {
+                        let params = inner
+                            .next()
+                            .ok_or_else(|| anyhow!("Missing parameters"))?
+                            .as_str();
+
                         output.push_str(&format!("LOAD {params}\nOUTPUT\n"));
                     }
-                    _ => return Err(anyhow!("Unsupported function: {ident}")),
+                    _ => {
+                        output.push_str(&format!("JNS {ident}\n"));
+                    }
                 }
             }
             _ => {}
@@ -140,6 +161,7 @@ pub fn generate(code: &str) -> Result<String> {
     let mut count_mul = 1;
     let mut count_div = 1;
     let mut variables: BTreeMap<String, (String, u16)> = BTreeMap::new();
+    let mut functions: BTreeMap<String, String> = BTreeMap::new();
     let mut output = String::new();
 
     for (token, stype, value) in DEFAULT_VARIABLES.iter() {
@@ -156,9 +178,14 @@ pub fn generate(code: &str) -> Result<String> {
         &mut output,
         &mut count_mul,
         &mut count_div,
+        &mut functions,
     )?;
 
     output.push_str("\nHALT\n\n");
+
+    for (_, func) in functions {
+        output.push_str(&format!("{}\n\n", func));
+    }
 
     for (ident, (stype, value)) in variables {
         output.push_str(&format!("{},   {} {}\n", ident, stype, value));

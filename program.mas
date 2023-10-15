@@ -1,41 +1,68 @@
 CLEAR
 STORE R
 
-LOAD N30
-STORE a
+LOAD N10
+STORE p
 CLEAR
 
 CLEAR
 STORE R
 
-LOAD N2
-STOREI a
+LOAD N20
+STORE q
 CLEAR
 
 CLEAR
 STORE R
 
-LOADI a
-STORE a_value
-
-LOAD N5
-ADD a_value
-STORE b
+LOAD N0
+STORE r
 CLEAR
-LOAD b
+
+JNS sum
+LOAD r
+OUTPUT
+CLEAR
+STORE R
+
+LOAD N100
+STORE p
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD N200
+STORE q
+CLEAR
+
+JNS sum
+LOAD r
 OUTPUT
 
 HALT
 
+sum,	HEX     000
+	CLEAR
+	STORE R
+	
+	LOAD p
+	ADD q
+	STORE r
+	CLEAR
+	JumpI   sum
+
 COUNT,   DEC 0
 J,   DEC 0
 K,   DEC 0
-N2,   HEX 2
-N30,   HEX 30
-N5,   DEC 5
+N0,   DEC 0
+N10,   DEC 10
+N100,   DEC 100
+N20,   DEC 20
+N200,   DEC 200
 ONE,   DEC 1
 POW,   DEC 0
 R,   DEC 0
-a,   HEX 0
-a_value,   DEC 0
-b,   DEC 0
+p,   DEC 0
+q,   DEC 0
+r,   DEC 0

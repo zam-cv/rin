@@ -1,5 +1,16 @@
-var *a: HEX = 30;
-*a = 2;
-var b: DEC = 5 + *a;
+var p: DEC = 10;
+var q: DEC = 20;
+var r: DEC = 0;
 
-print(b);
+fn sum() {
+	r = p + q;
+}
+
+sum();
+print(r);
+
+p = 100;
+q = 200;
+
+sum();
+print(r);
