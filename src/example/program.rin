@@ -1,5 +1,7 @@
-var a: DEC = 40 / 5;
-var b: DEC = a + 2;
-var c: DEC = b * 3;
+var a: DEC = 5;
+var b: DEC = 1;
 
-print(c);
+while (a > b) {
+    print(b);
+    b = b + 1;
+}

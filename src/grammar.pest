@@ -1,5 +1,8 @@
-program = _{ SOI ~ (( statement | function_call ) ~ ";" )* ~ EOI }
+program = _{ SOI ~ instruction* ~ EOI }
 statement = { "var" ~ ident ~ ":" ~ type ~ "=" ~ (function_call | expr) }
+
+instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | while_loop ) }
+reassignment = { ident ~ "=" ~ (function_call | expr) }
 
 expr = { atom ~ (bin_op ~ atom)* }
 atom = _{ integer | ident }
@@ -8,6 +11,13 @@ bin_op = _{ add | subtract | multiply | divide }
     subtract = { "-" }
     multiply = { "*" }
     divide = { "/" }
+
+while_loop = { "while" ~ "(" ~ condition ~ ")" ~ "{" ~ instruction* ~ "}" }
+condition = _{ atom ~ comp_op ~ atom }
+comp_op = { equal | greater | less }
+    equal = { "==" }
+    greater = { ">" }
+    less = { "<" }
 
 type = { "HEX" | "DEC" | "BIN" }
 function_call = { ident ~ "(" ~ parameter? ~ ("," ~ parameter)* ~ ")" }

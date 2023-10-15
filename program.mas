@@ -1,97 +1,46 @@
 CLEAR
 STORE R
 
-CLEAR
-STORE J
-STORE POW
-LOAD N40
-STORE K
-CLEAR
-    
-OUTER_1, LOAD K
-    SKIPCOND 800
-    JUMP DONE_1
-    LOAD ONE
-    STORE POW
-    LOAD N5
-    STORE J
-    
-INNER_1, LOAD J
-    ADD J
-    SUBT K
-    SKIPCOND 000
-    JUMP AFTIN_1
-    LOAD J
-    ADD J
-    STORE J
-    LOAD POW
-    ADD POW
-    STORE POW
-    JUMP INNER_1
-    
-AFTIN_1, LOAD K
-    SUBT J
-    STORE K
-    LOAD R
-    ADD POW
-    STORE R
-    JUMP OUTER_1
-    
-DONE_1, LOAD K
-    SKIPCOND 000
-    JUMP DISP_1
-    LOAD R
-    SUBT ONE
-
-DISP_1, LOAD R
-
+LOAD N5
 STORE a
 CLEAR
+
 CLEAR
 STORE R
 
-
-LOAD a
-ADD N2
+LOAD N1
 STORE b
 CLEAR
-CLEAR
-STORE R
 
 
-LOAD b
-STORE COUNT
+WHILE, 	LOAD a		
+    SUBT b
+    SKIPCOND 800
+    JUMP END      
+    	
+	LOAD b
+	OUTPUT
+	CLEAR
+	STORE R
+	
+	LOAD b
+	ADD N1
+	STORE b
+	CLEAR
+                    
+    JUMP WHILE
 
-LOOP_1,	LOAD R
-    ADD N3
-    STORE R
-           
-    LOAD COUNT
-    SUBT ONE
-    STORE COUNT
-            
-    SKIPCOND 400
-    JUMP LOOP_1
-
-LOAD R
-STORE c
-CLEAR
-
-LOAD c
-OUTPUT
+END, CLEAR
 
 HALT
 
 COUNT,   DEC 0
 J,   DEC 0
 K,   DEC 0
-N2,   DEC 2
-N3,   DEC 3
-N40,   DEC 40
+N1,   DEC 1
 N5,   DEC 5
 ONE,   DEC 1
 POW,   DEC 0
 R,   DEC 0
 a,   DEC 0
 b,   DEC 0
-c,   DEC 0

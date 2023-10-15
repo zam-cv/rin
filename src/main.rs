@@ -7,6 +7,10 @@ use std::{fs, io::Write};
 
 mod cli;
 mod parser;
+mod operations;
+mod expr;
+mod loops;
+mod functions;
 
 fn program() -> Result<()> {
     let cli = Cli::parse();
