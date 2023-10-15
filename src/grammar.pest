@@ -1,5 +1,5 @@
 program = _{ SOI ~ instruction* ~ EOI }
-statement = { "var" ~ "*"? ~ ident ~ ":" ~ type ~ "=" ~ values }
+statement = { ("var" ~ ident ~ (":" ~ type)? ~ "=" ~ values | "var" ~ "*" ~ ident ~ (":" ~ type)? ~ "->" ~ values) }
 
 values = _{ function_call | expr }
 instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop | function ) }

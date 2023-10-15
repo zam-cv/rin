@@ -59,14 +59,20 @@ pub fn resolve_instructions(
                     .ok_or_else(|| anyhow!("Missing identifier"))?
                     .as_str()
                     .to_string();
+                
+                let (type_value, value_pair) = if 2 == inner.clone().count() {
+                    let type_value = inner
+                        .next()
+                        .ok_or_else(|| anyhow!("Missing type"))?
+                        .as_str()
+                        .to_string();
 
-                let type_value = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing type"))?
-                    .as_str()
-                    .to_string();
+                    let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
 
-                let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
+                    (type_value, value_pair)
+                } else {
+                    ("DEC".to_string(), inner.next().ok_or_else(|| anyhow!("Missing value"))?)
+                };
 
                 match value_pair.as_rule() {
                     Rule::expr => {

@@ -1,16 +1,6 @@
-var p: DEC = 10;
-var q: DEC = 20;
-var r: DEC = 0;
+var *o -> 100;
+*o = 200;
+var p = *o;
+var q = p + 1;
 
-fn sum() {
-	r = p + q;
-}
-
-sum();
-print(r);
-
-p = 100;
-q = 200;
-
-sum();
-print(r);
+print(q);
