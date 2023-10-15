@@ -1,4 +1,4 @@
-use crate::expr::{parse_expr, resolve_expr};
+use crate::expr::{assign, parse_expr, resolve_expr};
 use crate::functions::returns_value;
 use crate::loops::while_loop;
 use anyhow::{anyhow, Result};
@@ -13,6 +13,7 @@ struct MyParser;
 pub enum Expr {
     Value(u16),
     Variable(String),
+    Deref(String),
     BinOp {
         lhs: Box<Expr>,
         op: Op,
@@ -28,6 +29,8 @@ pub enum Op {
     Divide,
 }
 
+pub const STORE: &str = "STORE";
+pub const STOREI: &str = "STOREI";
 pub const DEFAULT_VALUE: u16 = 0;
 pub const DEFAULT_VARIABLES: [(&str, &str, u16); 6] = [
     ("COUNT", "DEC", DEFAULT_VALUE),
@@ -65,6 +68,17 @@ pub fn resolve_instructions(
                 let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
 
                 match value_pair.as_rule() {
+                    Rule::deref => {
+                        let mut inner = value_pair.into_inner();
+
+                        let ptr_name = inner
+                            .next()
+                            .ok_or_else(|| anyhow!("Missing identifier"))?
+                            .as_str()
+                            .to_string();
+
+                        output.push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
+                    }
                     Rule::expr => {
                         let expr = parse_expr(value_pair.into_inner());
                         output.push_str("CLEAR\nSTORE R\n");
@@ -77,6 +91,7 @@ pub fn resolve_instructions(
                             output,
                             count_mul,
                             count_div,
+                            STORE,
                         )?;
                     }
                     Rule::function_call => returns_value(value_pair, &ident, output)?,
@@ -86,33 +101,10 @@ pub fn resolve_instructions(
                 variables.insert(ident, (type_value, DEFAULT_VALUE));
             }
             Rule::reassignment => {
-                let mut inner = pair.into_inner();
-
-                let ident = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing identifier"))?
-                    .as_str()
-                    .to_string();
-
-                let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
-
-                match value_pair.as_rule() {
-                    Rule::expr => {
-                        let expr = parse_expr(value_pair.into_inner());
-                        output.push_str("CLEAR\nSTORE R\n");
-                        let type_name = variables
-                            .get(&ident)
-                            .ok_or_else(|| anyhow!("Variable not found"))?
-                            .0
-                            .clone();
-
-                        resolve_expr(
-                            expr, &ident, &type_name, variables, output, count_mul, count_div,
-                        )?;
-                    }
-                    Rule::function_call => returns_value(value_pair, &ident, output)?,
-                    _ => return Err(anyhow!("Invalid value assignment")),
-                }
+                assign(pair, variables, output, count_mul, count_div, STORE)?;
+            }
+            Rule::dereference => {
+                assign(pair, variables, output, count_mul, count_div, STOREI)?;
             }
             Rule::while_loop => {
                 while_loop(pair, variables, output, count_mul, count_div)?;
@@ -132,7 +124,7 @@ pub fn resolve_instructions(
 
                 match ident {
                     "print" => {
-                        output.push_str(&format!("\nLOAD {params}\nOUTPUT\n"));
+                        output.push_str(&format!("LOAD {params}\nOUTPUT\n"));
                     }
                     _ => return Err(anyhow!("Unsupported function: {ident}")),
                 }

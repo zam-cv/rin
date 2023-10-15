@@ -1,46 +1,41 @@
 CLEAR
 STORE R
 
-LOAD N5
+LOAD N30
 STORE a
 CLEAR
 
 CLEAR
 STORE R
 
-LOAD N1
-STORE b
+LOAD N2
+STOREI a
 CLEAR
 
+CLEAR
+STORE R
 
-WHILE, 	LOAD a		
-    SUBT b
-    SKIPCOND 800
-    JUMP END      
-    	
-	LOAD b
-	OUTPUT
-	CLEAR
-	STORE R
-	
-	LOAD b
-	ADD N1
-	STORE b
-	CLEAR
-                    
-    JUMP WHILE
+LOADI a
+STORE a_value
 
-END, CLEAR
+LOAD N5
+ADD a_value
+STORE b
+CLEAR
+LOAD b
+OUTPUT
 
 HALT
 
 COUNT,   DEC 0
 J,   DEC 0
 K,   DEC 0
-N1,   DEC 1
+N2,   HEX 2
+N30,   HEX 30
 N5,   DEC 5
 ONE,   DEC 1
 POW,   DEC 0
 R,   DEC 0
-a,   DEC 0
+a,   HEX 0
+a_value,   DEC 0
 b,   DEC 0

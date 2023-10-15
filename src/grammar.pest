@@ -1,11 +1,14 @@
 program = _{ SOI ~ instruction* ~ EOI }
-statement = { "var" ~ ident ~ ":" ~ type ~ "=" ~ (function_call | expr) }
+statement = { "var" ~ "*"? ~ ident ~ ":" ~ type ~ "=" ~ values }
 
-instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | while_loop ) }
-reassignment = { ident ~ "=" ~ (function_call | expr) }
+values = _{ function_call | expr | deref }
+instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop ) }
+reassignment = { ident ~ "=" ~ values }
+dereference = { "*" ~ ident ~ "=" ~ values }
+deref = { "*" ~ ident }
 
 expr = { atom ~ (bin_op ~ atom)* }
-atom = _{ integer | ident }
+atom = _{ integer | ident | deref }
 bin_op = _{ add | subtract | multiply | divide }
     add = { "+" }
     subtract = { "-" }

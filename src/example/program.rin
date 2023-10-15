@@ -1,7 +1,5 @@
-var a: DEC = 5;
-var b: DEC = 1;
+var *a: HEX = 30;
+*a = 2;
+var b: DEC = 5 + *a;
 
-while (a > b) {
-    print(b);
-    b = b + 1;
-}
+print(b);

@@ -42,7 +42,7 @@ pub fn while_loop(
 
     let operator = match condition.as_str() {
         "<" => "000",
-        "==" => "400",
+        // "==" => "400",
         ">" => "800",
         _ => return Err(anyhow!("Invalid condition")),
     };
