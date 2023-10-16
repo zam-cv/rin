@@ -1,6 +1,13 @@
-var *o -> 100;
-*o = 200;
-var p = *o;
-var q = p + 1;
+var p: DEC = 10;
+var q: DEC = 5;
+var limit: DEC = 10;
 
-print(q);
+while (p < limit) {
+	p = p + 1;
+
+	while (q < limit) {
+		q = q + 1;
+
+		print(p);
+	}
+}

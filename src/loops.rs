@@ -1,14 +1,10 @@
-use crate::parser::{resolve_instructions, Rule};
+use crate::parser::{resolve_instructions, Global, Rule};
 use anyhow::{anyhow, Result};
-use std::collections::BTreeMap;
 
 pub fn while_loop(
     pair: pest::iterators::Pair<Rule>,
-    variables: &mut BTreeMap<String, (String, u16)>,
+    global: &mut Global,
     output: &mut String,
-    count_mul: &mut u64,
-    count_div: &mut u64,
-    functions: &mut BTreeMap<String, String>,
 ) -> Result<()> {
     let mut inner = pair.into_inner();
 
@@ -30,14 +26,7 @@ pub fn while_loop(
 
     let mut block_output = String::new();
 
-    resolve_instructions(
-        inner,
-        variables,
-        &mut block_output,
-        count_mul,
-        count_div,
-        functions,
-    )?;
+    resolve_instructions(inner, global, &mut block_output)?;
 
     let tab = block_output
         .lines()
@@ -53,14 +42,16 @@ pub fn while_loop(
     };
 
     output.push_str(&format!(
-        "WHILE, 	LOAD {var_a}		
+        "WHILE_{}, 	LOAD {var_a}		
     SUBT {var_b}
     SKIPCOND {operator}
     JUMP END      
     {tab}
                     
-    JUMP WHILE\n\nEND, CLEAR\n"
+    JUMP WHILE_{}\n\nEND, CLEAR\n",
+        global.counts.loops, global.counts.loops
     ));
 
+    global.counts.loops += 1;
     Ok(())
 }

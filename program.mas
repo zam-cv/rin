@@ -1,32 +1,56 @@
 CLEAR
 STORE R
 
-LOAD N100
-STORE o
-CLEAR
-
-CLEAR
-STORE R
-
-LOAD N200
-STOREI o
-CLEAR
-
-CLEAR
-STORE R
-
-LOADI o
+LOAD N10
 STORE p
 CLEAR
+
 CLEAR
 STORE R
 
-LOAD p
-ADD N1
+LOAD N5
 STORE q
 CLEAR
-LOAD q
-OUTPUT
+
+CLEAR
+STORE R
+
+LOAD N10
+STORE limit
+CLEAR
+
+WHILE_2, 	LOAD p		
+    SUBT limit
+    SKIPCOND 000
+    JUMP END      
+    	CLEAR
+	STORE R
+	
+	LOAD p
+	ADD N1
+	STORE p
+	CLEAR
+	WHILE_1, 	LOAD q		
+	    SUBT limit
+	    SKIPCOND 000
+	    JUMP END      
+	    	CLEAR
+		STORE R
+		
+		LOAD q
+		ADD N1
+		STORE q
+		CLEAR
+		LOAD p
+		OUTPUT
+	                    
+	    JUMP WHILE_1
+	
+	END, CLEAR
+                    
+    JUMP WHILE_2
+
+END, CLEAR
 
 HALT
 
@@ -34,11 +58,11 @@ COUNT,   DEC 0
 J,   DEC 0
 K,   DEC 0
 N1,   DEC 1
-N100,   DEC 100
-N200,   DEC 200
+N10,   DEC 10
+N5,   DEC 5
 ONE,   DEC 1
 POW,   DEC 0
 R,   DEC 0
-o,   DEC 0
+limit,   DEC 0
 p,   DEC 0
 q,   DEC 0

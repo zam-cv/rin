@@ -1,6 +1,6 @@
 use crate::functions::returns_value;
 use crate::operations::{add, divide, multiply, subtract};
-use crate::parser::{Expr, Op, Rule, DEFAULT_VALUE};
+use crate::parser::{Expr, Global, Op, Rule, DEFAULT_VALUE};
 use anyhow::{anyhow, Result};
 use pest::{iterators::Pairs, pratt_parser::PrattParser};
 use std::collections::BTreeMap;
@@ -54,17 +54,15 @@ pub fn parse_expr(pairs: Pairs<Rule>) -> Expr {
 pub fn resolve_sub_expr(
     token: Expr,
     type_value: &String,
-    mut variables: &mut BTreeMap<String, (String, u16)>,
+    global: &mut Global,
     output: &mut String,
-    count_mul: &mut u64,
-    count_div: &mut u64,
     type_store: &str,
 ) -> Result<String> {
     Ok(match token {
-        Expr::Value(value) => set_number(&value, &type_value, &mut variables),
+        Expr::Value(value) => set_number(&value, &type_value, &mut global.variables),
         Expr::Variable(name) => name,
         Expr::Deref(ptr_name) => {
-            variables.insert(
+            global.variables.insert(
                 format!("{ptr_name}_value"),
                 (type_value.clone(), DEFAULT_VALUE),
             );
@@ -78,10 +76,8 @@ pub fn resolve_sub_expr(
                 Expr::BinOp { lhs, op, rhs },
                 &r,
                 &type_value,
-                &mut variables,
+                global,
                 output,
-                count_mul,
-                count_div,
                 type_store,
             )?;
 
@@ -94,10 +90,8 @@ pub fn resolve_expr(
     expression: Expr,
     name: &String,
     type_value: &String,
-    mut variables: &mut BTreeMap<String, (String, u16)>,
+    global: &mut Global,
     output: &mut String,
-    count_mul: &mut u64,
-    count_div: &mut u64,
     type_store: &str,
 ) -> Result<()> {
     let name = name.clone();
@@ -105,43 +99,27 @@ pub fn resolve_expr(
 
     match expression {
         Expr::Value(value) => {
-            let n = set_number(&value, &type_value, &mut variables);
+            let n = set_number(&value, &type_value, &mut global.variables);
             output.push_str(&format!("\nLOAD {n}\n{type_store} {name}\nCLEAR\n\n"));
         }
         Expr::Variable(var) => {
             output.push_str(&format!("\nLOAD {}\n{type_store} {}\nCLEAR\n", var, name));
-            variables.insert(name, (type_value, DEFAULT_VALUE));
+            global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::Deref(ptr_name) => {
             output.push_str(&format!("\nLOADI {ptr_name}\n{type_store} {name}\nCLEAR\n"));
-            variables.insert(name, (type_value, DEFAULT_VALUE));
+            global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::BinOp { lhs, op, rhs } => {
-            let lhs = resolve_sub_expr(
-                *lhs,
-                &type_value,
-                &mut variables,
-                output,
-                count_mul,
-                count_div,
-                type_store,
-            )?;
+            let lhs = resolve_sub_expr(*lhs, &type_value, global, output, type_store)?;
 
-            let rhs = resolve_sub_expr(
-                *rhs,
-                &type_value,
-                &mut variables,
-                output,
-                count_mul,
-                count_div,
-                type_store,
-            )?;
+            let rhs = resolve_sub_expr(*rhs, &type_value, global, output, type_store)?;
 
             let result = match op {
                 Op::Add => add(&lhs, &rhs),
                 Op::Subtract => subtract(&lhs, &rhs),
-                Op::Multiply => multiply(&lhs, &rhs, count_mul),
-                Op::Divide => divide(&lhs, &rhs, count_div),
+                Op::Multiply => multiply(&lhs, &rhs, &mut global.counts.mul),
+                Op::Divide => divide(&lhs, &rhs, &mut global.counts.div),
             };
 
             output.push_str(&result);
@@ -154,10 +132,8 @@ pub fn resolve_expr(
 
 pub fn assign(
     pair: pest::iterators::Pair<Rule>,
-    variables: &mut BTreeMap<String, (String, u16)>,
+    global: &mut Global,
     output: &mut String,
-    count_mul: &mut u64,
-    count_div: &mut u64,
     type_store: &str,
 ) -> Result<()> {
     let mut inner = pair.into_inner();
@@ -180,20 +156,20 @@ pub fn assign(
                 .as_str()
                 .to_string();
 
-            output.push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
+            output
+                .push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
         }
         Rule::expr => {
             let expr = parse_expr(value_pair.into_inner());
             output.push_str("CLEAR\nSTORE R\n");
-            let type_name = variables
+            let type_name = global
+                .variables
                 .get(&ident)
                 .ok_or_else(|| anyhow!("Variable not found"))?
                 .0
                 .clone();
 
-            resolve_expr(
-                expr, &ident, &type_name, variables, output, count_mul, count_div, type_store,
-            )?;
+            resolve_expr(expr, &ident, &type_name, global, output, type_store)?;
         }
         Rule::function_call => returns_value(value_pair, &ident, output)?,
         _ => return Err(anyhow!("Invalid value assignment")),

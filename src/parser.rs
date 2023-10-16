@@ -1,5 +1,5 @@
 use crate::expr::{assign, parse_expr, resolve_expr};
-use crate::functions::returns_value;
+use crate::functions::{function, returns_value};
 use crate::loops::while_loop;
 use anyhow::{anyhow, Result};
 use pest::Parser;
@@ -29,6 +29,18 @@ pub enum Op {
     Divide,
 }
 
+pub struct Counts {
+    pub mul: u64,
+    pub div: u64,
+    pub loops: u64,
+}
+
+pub struct Global {
+    pub variables: BTreeMap<String, (String, u16)>,
+    pub functions: BTreeMap<String, String>,
+    pub counts: Counts,
+}
+
 pub const STORE: &str = "STORE";
 pub const STOREI: &str = "STOREI";
 pub const DEFAULT_VALUE: u16 = 0;
@@ -43,11 +55,8 @@ pub const DEFAULT_VARIABLES: [(&str, &str, u16); 6] = [
 
 pub fn resolve_instructions(
     parsed: pest::iterators::Pairs<Rule>,
-    variables: &mut BTreeMap<String, (String, u16)>,
+    global: &mut Global,
     output: &mut String,
-    count_mul: &mut u64,
-    count_div: &mut u64,
-    functions: &mut BTreeMap<String, String>,
 ) -> Result<()> {
     for pair in parsed {
         match pair.as_rule() {
@@ -59,7 +68,7 @@ pub fn resolve_instructions(
                     .ok_or_else(|| anyhow!("Missing identifier"))?
                     .as_str()
                     .to_string();
-                
+
                 let (type_value, value_pair) = if 2 == inner.clone().count() {
                     let type_value = inner
                         .next()
@@ -71,7 +80,10 @@ pub fn resolve_instructions(
 
                     (type_value, value_pair)
                 } else {
-                    ("DEC".to_string(), inner.next().ok_or_else(|| anyhow!("Missing value"))?)
+                    (
+                        "DEC".to_string(),
+                        inner.next().ok_or_else(|| anyhow!("Missing value"))?,
+                    )
                 };
 
                 match value_pair.as_rule() {
@@ -79,60 +91,25 @@ pub fn resolve_instructions(
                         let expr = parse_expr(value_pair.into_inner());
                         output.push_str("CLEAR\nSTORE R\n");
 
-                        resolve_expr(
-                            expr,
-                            &ident,
-                            &type_value,
-                            variables,
-                            output,
-                            count_mul,
-                            count_div,
-                            STORE,
-                        )?;
+                        resolve_expr(expr, &ident, &type_value, global, output, STORE)?;
                     }
                     Rule::function_call => returns_value(value_pair, &ident, output)?,
                     _ => return Err(anyhow!("Invalid value assignment")),
                 }
 
-                variables.insert(ident, (type_value, DEFAULT_VALUE));
+                global.variables.insert(ident, (type_value, DEFAULT_VALUE));
             }
             Rule::reassignment => {
-                assign(pair, variables, output, count_mul, count_div, STORE)?;
+                assign(pair, global, output, STORE)?;
             }
             Rule::dereference => {
-                assign(pair, variables, output, count_mul, count_div, STOREI)?;
+                assign(pair, global, output, STOREI)?;
             }
             Rule::while_loop => {
-                while_loop(pair, variables, output, count_mul, count_div, functions)?;
+                while_loop(pair, global, output)?;
             }
             Rule::function => {
-                let mut inner = pair.into_inner();
-
-                let ident = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing identifier"))?
-                    .as_str();
-
-                let mut block_output = String::new();
-
-                resolve_instructions(
-                    inner,
-                    variables,
-                    &mut block_output,
-                    count_mul,
-                    count_div,
-                    functions,
-                )?;
-
-                let tab = block_output
-                    .lines()
-                    .map(|line| format!("\t{}", line))
-                    .collect::<Vec<String>>()
-                    .join("\n");
-
-                let mut func = String::new();
-                func.push_str(&format!("{ident},\tHEX     000\n{tab}\n\tJumpI   {ident}"));
-                functions.insert(ident.to_string(), func);
+                function(pair, global)?;
             }
             Rule::function_call => {
                 let mut inner = pair.into_inner();
@@ -164,36 +141,39 @@ pub fn resolve_instructions(
 }
 
 pub fn generate(code: &str) -> Result<String> {
-    let mut count_mul = 1;
-    let mut count_div = 1;
-    let mut variables: BTreeMap<String, (String, u16)> = BTreeMap::new();
-    let mut functions: BTreeMap<String, String> = BTreeMap::new();
     let mut output = String::new();
 
+    let counts = Counts {
+        mul: 1,
+        div: 1,
+        loops: 1,
+    };
+
+    let mut global = Global {
+        variables: BTreeMap::new(),
+        functions: BTreeMap::new(),
+        counts,
+    };
+
     for (token, stype, value) in DEFAULT_VARIABLES.iter() {
-        variables.insert(token.to_string(), (stype.to_string(), *value));
+        global
+            .variables
+            .insert(token.to_string(), (stype.to_string(), *value));
     }
 
     let parsed = MyParser::parse(Rule::program, &code).unwrap_or_else(|e| {
         panic!("Parsing error: {}", e);
     });
 
-    resolve_instructions(
-        parsed,
-        &mut variables,
-        &mut output,
-        &mut count_mul,
-        &mut count_div,
-        &mut functions,
-    )?;
+    resolve_instructions(parsed, &mut global, &mut output)?;
 
     output.push_str("\nHALT\n\n");
 
-    for (_, func) in functions {
+    for (_, func) in global.functions {
         output.push_str(&format!("{}\n\n", func));
     }
 
-    for (ident, (stype, value)) in variables {
+    for (ident, (stype, value)) in global.variables {
         output.push_str(&format!("{},   {} {}\n", ident, stype, value));
     }
 
