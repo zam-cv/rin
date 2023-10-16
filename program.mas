@@ -1,7 +1,7 @@
 CLEAR
 STORE R
 
-LOAD N10
+LOAD N5
 STORE p
 CLEAR
 
@@ -19,40 +19,28 @@ LOAD N10
 STORE limit
 CLEAR
 
-WHILE_2, 	LOAD p		
-    SUBT limit
-    SKIPCOND 000
-    JUMP END      
-    	CLEAR
+WHILE_1,	LOAD p
+	SUBT limit
+	SKIPCOND 000
+	JUMP END
+	JNS BLOCK_1
+	JUMP WHILE_1
+
+END, CLEAR
+
+HALT
+
+BLOCK_1,	HEX	000
+	CLEAR
 	STORE R
 	
 	LOAD p
 	ADD N1
 	STORE p
 	CLEAR
-	WHILE_1, 	LOAD q		
-	    SUBT limit
-	    SKIPCOND 000
-	    JUMP END      
-	    	CLEAR
-		STORE R
-		
-		LOAD q
-		ADD N1
-		STORE q
-		CLEAR
-		LOAD p
-		OUTPUT
-	                    
-	    JUMP WHILE_1
-	
-	END, CLEAR
-                    
-    JUMP WHILE_2
-
-END, CLEAR
-
-HALT
+	LOAD p
+	OUTPUT
+	JumpI	BLOCK_1
 
 COUNT,   DEC 0
 J,   DEC 0
