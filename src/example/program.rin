@@ -1,9 +1,5 @@
-var p: DEC = 5;
-var q: DEC = 5;
-var limit: DEC = 10;
+var p = 5 + 10;
+var q = p * 2;
+var r = q / 5;
 
-while (p < limit) {
-	p = p + 1;
-
-	print(p);
-}
+print(r);

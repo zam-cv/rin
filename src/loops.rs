@@ -44,8 +44,8 @@ pub fn while_loop(
     let loops = global.counts.loops;
 
     output.push_str(&format!(
-        "WHILE_{loops},\tLOAD {var_a}\n\tSUBT {var_b}\n\tSKIPCOND {operator}\n\tJUMP END
-\tJNS BLOCK_{loops}\n\tJUMP WHILE_{loops}\n\nEND, CLEAR\n"));
+        "WHILE_{loops},\tLOAD {var_a}\n\tSUBT {var_b}\n\tSKIPCOND {operator}\n\tJUMP END_{loops}
+\tJNS BLOCK_{loops}\n\tJUMP WHILE_{loops}\n\nEND_{loops}, CLEAR\n"));
 
     global.functions.insert(
         format!("WHILE_{loops}"),
