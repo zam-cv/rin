@@ -25,44 +25,8 @@ pub fn subtract(a: &String, b: &String) -> String {
 
 pub fn divide(a: &String, b: &String, count: &mut u64) -> String {
   let value = format!(
-      "CLEAR\nSTORE J\nSTORE POW\nLOAD {a}\nSTORE K\nCLEAR
-  
-OUTER_{count}, LOAD K
-  SKIPCOND 800
-  JUMP DONE_{count}
-  LOAD ONE
-  STORE POW
-  LOAD {b}
-  STORE J
-  
-INNER_{count}, LOAD J
-  ADD J
-  SUBT K
-  SKIPCOND 000
-  JUMP AFTIN_{count}
-  LOAD J
-  ADD J
-  STORE J
-  LOAD POW
-  ADD POW
-  STORE POW
-  JUMP INNER_{count}
-  
-AFTIN_{count}, LOAD K
-  SUBT J
-  STORE K
-  LOAD R
-  ADD POW
-  STORE R
-  JUMP OUTER_{count}
-  
-DONE_{count}, LOAD K
-  SKIPCOND 000
-  JUMP DISP_{count}
-  LOAD R
-  SUBT ONE
-
-DISP_{count}, LOAD R\n\n"
+      "CLEAR\nSTORE R\nSTORE C\nLOAD {a}\nSTORE A\nLOAD {b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND 000
+JNS SUB\nSKIPCOND 000\nDIV_{count},	JNS DIV\n\tSKIPCOND 000\n\tJUMP DIV_{count}\n\nLOAD R\n\n"
   );
   *count += 1;
   value

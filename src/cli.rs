@@ -9,7 +9,7 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    Run {
+    Build {
         #[arg(required = true)]
         file: String,
         #[arg(short)]

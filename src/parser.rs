@@ -33,6 +33,7 @@ pub struct Counts {
     pub mul: u64,
     pub div: u64,
     pub loops: u64,
+    pub ifs: u64
 }
 
 pub struct Global {
@@ -47,10 +48,10 @@ pub const DEFAULT_VALUE: u16 = 0;
 pub const DEFAULT_VARIABLES: [(&str, &str, u16); 6] = [
     ("COUNT", "DEC", DEFAULT_VALUE),
     ("ONE", "DEC", 1),
+    ("A", "DEC", DEFAULT_VALUE),
+    ("B", "DEC", DEFAULT_VALUE),
+    ("C", "DEC", DEFAULT_VALUE),
     ("R", "DEC", DEFAULT_VALUE),
-    ("K", "DEC", DEFAULT_VALUE),
-    ("J", "DEC", DEFAULT_VALUE),
-    ("POW", "DEC", DEFAULT_VALUE),
 ];
 
 pub fn resolve_instructions(
@@ -111,6 +112,44 @@ pub fn resolve_instructions(
             Rule::function => {
                 function(pair, global)?;
             }
+            Rule::if_cond => {
+                let mut inner = pair.into_inner();
+
+                let var_a = inner
+                    .next()
+                    .ok_or_else(|| anyhow!("Missing valueA"))?
+                    .as_str();
+
+                let condition = inner
+                    .next()
+                    .ok_or_else(|| anyhow!("Missing condition"))?
+                    .as_str()
+                    .to_string();
+
+                let var_b = inner
+                    .next()
+                    .ok_or_else(|| anyhow!("Missing valueB"))?
+                    .as_str();
+
+                let mut block_output = String::new();
+                resolve_instructions(inner, global, &mut block_output)?;
+                let tab = block_output
+                    .lines()
+                    .map(|line| format!("\t{}", line))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                let operator = match condition.as_str() {
+                    ">" => "000",
+                    "!=" => "400",
+                    "<" => "800",
+                    _ => return Err(anyhow!("Invalid condition")),
+                };
+                
+                let ifs = global.counts.ifs;
+                output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1"));
+                global.functions.insert(format!("THEN_{ifs}"), format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"));
+            }
             Rule::function_call => {
                 let mut inner = pair.into_inner();
 
@@ -147,6 +186,7 @@ pub fn generate(code: &str) -> Result<String> {
         mul: 1,
         div: 1,
         loops: 1,
+        ifs: 1
     };
 
     let mut global = Global {
@@ -168,6 +208,17 @@ pub fn generate(code: &str) -> Result<String> {
     resolve_instructions(parsed, &mut global, &mut output)?;
 
     output.push_str("\nHALT\n\n");
+
+    if global.counts.div > 1 {
+        global.functions.insert(
+            "DIV".to_string(),
+            format!(
+                "DIV,	HEX	000\n\tLOAD C\n\tADD B\n\tSTORE C\n\tLOAD R\n\tADD ONE\n\tSTORE R\n\tLOAD A\n\tSUBT C\n\tJUMPI DIV
+
+SUB,	HEX 000\n\tLOAD R\n\tSUBT ONE\n\tSTORE R\n\tLOAD A\n\tSUBT B\n\tJUMPI SUB"
+            ),
+        );
+    }
 
     for (_, func) in global.functions {
         output.push_str(&format!("{}\n\n", func));

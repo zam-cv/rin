@@ -16,7 +16,7 @@ fn program() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Run { file, output }) => {
+        Some(Commands::Build { file, output }) => {
             let current_dir = std::env::current_dir()?;
             let file = current_dir.join(file);
             let code = fs::read_to_string(file)?;

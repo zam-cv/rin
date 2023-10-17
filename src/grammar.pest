@@ -2,7 +2,7 @@ program = _{ SOI ~ instruction* ~ EOI }
 statement = { ("var" ~ ident ~ (":" ~ type)? ~ "=" ~ values | "var" ~ "*" ~ ident ~ (":" ~ type)? ~ "->" ~ values) }
 
 values = _{ function_call | expr }
-instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop | function ) }
+instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop | function | if_cond ) }
 reassignment = { ident ~ "=" ~ values }
 dereference = { "*" ~ ident ~ "=" ~ values }
 deref = { "*" ~ ident }
@@ -16,12 +16,18 @@ bin_op = _{ add | subtract | multiply | divide }
     multiply = { "*" }
     divide = { "/" }
 
-while_loop = { "while" ~ "(" ~ condition ~ ")" ~ "{" ~ instruction* ~ "}" }
-condition = _{ atom ~ comp_op ~ atom }
-comp_op = { equal | greater | less }
-    equal = { "==" }
-    greater = { ">" }
-    less = { "<" }
+if_cond = { "if " ~ "(" ~ condition_if ~ ")" ~ "{" ~ instruction* ~ "}" }
+condition_if = _{ atom ~ comp_op_if ~ atom }
+comp_op_if = { diff | greater | less }
+diff = { "!=" }
+
+while_loop = { "while" ~ "(" ~ condition_while ~ ")" ~ "{" ~ instruction* ~ "}" }
+condition_while = _{ atom ~ comp_op_while ~ atom }
+comp_op_while = { equal | greater | less }
+
+equal= { "==" }
+greater = { ">" }
+less = { "<" }
 
 type = { "HEX" | "DEC" | "BIN" }
 function_call = { ident ~ "(" ~ parameter? ~ ("," ~ parameter)* ~ ")" }

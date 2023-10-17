@@ -1,5 +1,8 @@
-var p = 5 + 10;
-var q = p * 2;
-var r = q / 5;
+var p = 10;
+var q = 5;
 
-print(r);
+var result = 1;
+
+if (q < p) {
+  print(result);
+}
