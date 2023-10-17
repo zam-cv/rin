@@ -1,25 +1,168 @@
 CLEAR
 STORE R
 
+LOAD N200
+STORE ptr
+CLEAR
+
+CLEAR
+STORE R
+
 LOAD N0
-STORE value
+STORE current
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD N0
+STORE result
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD N0
+STORE sum
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD N0
+STORE i
+CLEAR
+
+CLEAR
+STORE R
+
+LOAD N9
+STORE limit
 CLEAR
 
 LOOP_1,	CLEAR
 	INPUT
-	STORE value
+	STORE current
 	CLEAR
-	LOAD value
-	OUTPUT
+	CLEAR
+	STORE R
+	
+	LOAD sum
+	ADD current
+	STORE sum
+	CLEAR
+	CLEAR
+	STORE R
+	
+	LOAD current
+	STOREI ptr
+	CLEAR
+	LOAD i
+	STORE A
+	LOAD limit
+	STORE B
+	
+	LOAD A
+	SUBT B
+	SKIPCOND 000
+	JNS THEN_1
+	CLEAR
+	STORE R
+	
+	LOAD ptr
+	ADD N1
+	STORE ptr
+	CLEAR
+	CLEAR
+	STORE R
+	
+	LOAD i
+	ADD N1
+	STORE i
+	CLEAR
 	JUMP LOOP_1
 
 HALT
+
+DIV,	HEX	000
+	LOAD C
+	ADD B
+	STORE C
+	LOAD R
+	ADD ONE
+	STORE R
+	LOAD A
+	SUBT C
+	JUMPI DIV
+
+SUB,	HEX 000
+	LOAD R
+	SUBT ONE
+	STORE R
+	LOAD A
+	SUBT B
+	JUMPI SUB
+
+THEN_1,	HEX	000
+	JNS promedio
+	LOAD result
+	OUTPUT
+	CLEAR
+	STORE R
+	
+	LOAD N0
+	STORE sum
+	CLEAR
+	
+	CLEAR
+	STORE R
+	
+	LOAD N0
+	STORE i
+	CLEAR
+	
+	JumpI	THEN_1
+
+promedio,	HEX     000
+	CLEAR
+	STORE R
+	CLEAR
+	STORE R
+	STORE C
+	LOAD sum
+	STORE A
+	LOAD N10
+	STORE B
+	
+	LOAD A
+	SUBT B
+	SKIPCOND 000
+	JNS SUB
+	SKIPCOND 000
+	DIV_1,	JNS DIV
+		SKIPCOND 000
+		JUMP DIV_1
+	
+	LOAD R
+	
+	STORE result
+	CLEAR
+	JumpI   promedio
 
 A,   DEC 0
 B,   DEC 0
 C,   DEC 0
 COUNT,   DEC 0
 N0,   DEC 0
+N1,   DEC 1
+N10,   DEC 10
+N200,   DEC 200
+N9,   DEC 9
 ONE,   DEC 1
 R,   DEC 0
-value,   DEC 0
+current,   DEC 0
+i,   DEC 0
+limit,   DEC 0
+ptr,   DEC 0
+result,   DEC 0
+sum,   DEC 0

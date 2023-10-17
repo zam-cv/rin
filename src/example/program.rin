@@ -1,6 +1,22 @@
-var value = 0;
+var *ptr -> 200;
+var current = 0;
+var result = 0;
+var sum = 0;
+var i = 0;
+var limit = 9;
 
 loop {
-  value = input();
-  print(value);
+  current = input();
+  sum = sum + current;
+  *ptr = current;
+
+  if (i > limit) {
+    result = sum / 10;
+    print(result);
+    sum = 0;
+    i = 0;
+  }
+  
+  ptr = ptr + 1;
+  i = i + 1;
 }

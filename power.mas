@@ -1,0 +1,31 @@
+BEGIN,	LOAD A
+		STORE COUNT
+
+MUL,	LOAD R
+        ADD B
+        STORE R
+
+        LOAD COUNT
+        SUBT ONE
+        STORE COUNT
+        
+        SKIPCOND 400
+        JUMP MUL
+
+NEXT,	LOAD V
+        SUBT ONE
+        STORE V
+
+		SKIPCOND 000
+        JUMP BEGIN
+
+END,	LOAD R
+		OUTPUT
+        HALT
+
+A,	DEC 5
+B,	DEC 10
+R,	DEC 0
+ONE,	DEC 1
+COUNT,	DEC 0
+V,	DEC 3

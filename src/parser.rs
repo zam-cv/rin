@@ -166,11 +166,13 @@ pub fn resolve_instructions(
                 };
 
                 let ifs = global.counts.ifs;
-                output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1"));
+                output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1\n"));
                 global.functions.insert(
                     format!("THEN_{ifs}"),
                     format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"),
                 );
+
+                global.counts.ifs += 1;
             }
             Rule::function_call => {
                 let mut inner = pair.into_inner();

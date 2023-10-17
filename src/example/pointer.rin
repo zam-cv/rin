@@ -1,0 +1,4 @@
+var *ptr -> 200;
+var value = 10;
+
+*ptr = value;
