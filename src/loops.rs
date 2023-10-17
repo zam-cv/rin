@@ -41,7 +41,7 @@ pub fn while_loop(
         _ => return Err(anyhow!("Invalid condition")),
     };
 
-    let loops = global.counts.loops;
+    let loops = global.counts.whiles;
 
     output.push_str(&format!(
         "WHILE_{loops},\tLOAD {var_a}\n\tSUBT {var_b}\n\tSKIPCOND {operator}\n\tJUMP END_{loops}
@@ -49,9 +49,9 @@ pub fn while_loop(
 
     global.functions.insert(
         format!("WHILE_{loops}"),
-        format!("BLOCK_{loops},\tHEX\t000\n{tab}\n\tJumpI\tBLOCK_{loops}"),
+        format!("BLOCK_{loops},\tHEX\t000\n{tab}\n\tJUMPI\tBLOCK_{loops}"),
     );
 
-    global.counts.loops += 1;
+    global.counts.whiles += 1;
     Ok(())
 }

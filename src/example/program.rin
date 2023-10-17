@@ -1,8 +1,6 @@
-var p = 10;
-var q = 5;
+var value = 0;
 
-var result = 1;
-
-if (q < p) {
-  print(result);
+loop {
+  value = input();
+  print(value);
 }

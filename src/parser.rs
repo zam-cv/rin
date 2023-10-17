@@ -33,7 +33,8 @@ pub struct Counts {
     pub mul: u64,
     pub div: u64,
     pub loops: u64,
-    pub ifs: u64
+    pub whiles: u64,
+    pub ifs: u64,
 }
 
 pub struct Global {
@@ -112,6 +113,24 @@ pub fn resolve_instructions(
             Rule::function => {
                 function(pair, global)?;
             }
+            Rule::loopp => {
+                let inner = pair.into_inner();
+                let mut block_output = String::new();
+
+                resolve_instructions(inner, global, &mut block_output)?;
+
+                let tab = block_output
+                    .lines()
+                    .map(|line| format!("\t{}", line))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                let loops = global.counts.whiles;
+
+                output.push_str(&format!(
+                    "LOOP_{loops},\tCLEAR\n{tab}\n\tJUMP LOOP_{loops}\n"
+                ));
+            }
             Rule::if_cond => {
                 let mut inner = pair.into_inner();
 
@@ -145,10 +164,13 @@ pub fn resolve_instructions(
                     "<" => "800",
                     _ => return Err(anyhow!("Invalid condition")),
                 };
-                
+
                 let ifs = global.counts.ifs;
                 output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1"));
-                global.functions.insert(format!("THEN_{ifs}"), format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"));
+                global.functions.insert(
+                    format!("THEN_{ifs}"),
+                    format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"),
+                );
             }
             Rule::function_call => {
                 let mut inner = pair.into_inner();
@@ -185,8 +207,9 @@ pub fn generate(code: &str) -> Result<String> {
     let counts = Counts {
         mul: 1,
         div: 1,
+        whiles: 1,
         loops: 1,
-        ifs: 1
+        ifs: 1,
     };
 
     let mut global = Global {
