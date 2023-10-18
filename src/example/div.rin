@@ -1,5 +1,0 @@
-var a = 121;
-var b = 10;
-var r = a / b;
-
-print(r);

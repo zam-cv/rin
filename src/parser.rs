@@ -152,7 +152,7 @@ pub fn generate(code: &str) -> Result<String> {
     }
 
     for (_, func) in global.functions {
-        output.push_str(&format!("{}\n\n", func));
+        output.push_str(&format!("{}\n", func));
     }
 
     for (ident, (stype, value)) in global.variables {

@@ -24,16 +24,10 @@ pub fn create_function(
     let mut block_output = String::new();
 
     resolve_instructions(block, global, &mut block_output)?;
-
-    let tab = block_output
-        .lines()
-        .map(|line| format!("\t{}", line))
-        .collect::<Vec<String>>()
-        .join("\n");
-
-    let mut func = String::new();
-    func.push_str(&format!("{ident},\tHEX     000\n{tab}\n\tJumpI   {ident}"));
-    global.functions.insert(ident.to_string(), func);
+    global.functions.insert(
+        ident.to_string(),
+        format!("FN_{ident},\tHEX 000\n\n{block_output}\nJUMPI FN_{ident}\n"),
+    );
 
     Ok(())
 }
@@ -51,10 +45,7 @@ pub fn function(pair: pest::iterators::Pair<Rule>, global: &mut Global) -> Resul
     Ok(())
 }
 
-pub fn function_call(
-    pair: pest::iterators::Pair<Rule>,
-    output: &mut String,
-) -> Result<()> {
+pub fn function_call(pair: pest::iterators::Pair<Rule>, output: &mut String) -> Result<()> {
     let mut inner = pair.into_inner();
 
     let ident = inner
@@ -72,7 +63,7 @@ pub fn function_call(
             output.push_str(&format!("LOAD {params}\nOUTPUT\n"));
         }
         _ => {
-            output.push_str(&format!("JNS {ident}\n"));
+            output.push_str(&format!("JNS FN_add\n"));
         }
     };
 
