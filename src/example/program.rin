@@ -14,8 +14,6 @@ loop {
     result = sum / limit;
     print(result);
 
-    result = 0;
-    current = 0;
     sum = 0;
     i = 0;
   }

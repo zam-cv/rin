@@ -136,8 +136,36 @@ pub fn generate(code: &str) -> Result<String> {
         global.functions.insert(
             "DIV".to_string(),
             format!(
-                "DIV,	HEX	000\n\tLOAD C\n\tADD B\n\tSTORE C\n\tLOAD R\n\tADD ONE\n\tSTORE R\n\tLOAD A\n\tSUBT C\n\tJUMPI DIV
-\nSUB,	HEX 000\n\tLOAD R\n\tSUBT ONE\n\tSTORE R\n\tLOAD A\n\tSUBT B\n\tJUMPI SUB"
+                "DIV,\tHEX 000\n
+CLEAR
+STORE C
+STORE R
+
+LOAD A
+SUBT B
+SKIPCOND 000
+DIV_SUB,	LOAD R
+    SUBT ONE
+    STORE R
+    LOAD A
+    SUBT B
+
+SKIPCOND 000
+DIV_ADD,	LOAD C
+    ADD B
+    STORE C
+    LOAD R
+    ADD ONE
+    STORE R
+    
+    LOAD A
+    SUBT C 
+    SKIPCOND 000
+    JUMP DIV_ADD
+
+LOAD R   
+
+JUMPI DIV\n"
             ),
         );
     }
@@ -146,7 +174,8 @@ pub fn generate(code: &str) -> Result<String> {
         global.functions.insert(
             "MUL".to_string(),
             format!(
-                "MUL_ADD,\tHEX 000\n\tLOAD R\n\tADD B\n\tSTORE R\n\n\tLOAD COUNT\n\tSUBT ONE\n\tSTORE COUNT\n\tJUMPI MUL_ADD"
+                "MUL,\tHEX 000\n\nLOAD A\nSTORE COUNT\n\nMUL_ADD,\tLOAD R\n\tADD B\n\tSTORE R\n\tLOAD COUNT
+\tSUBT ONE\n\tSTORE COUNT\n\tSKIPCOND 400\n\tJUMP MUL_ADD\n\nJUMPI MUL\n"
             ),
         );
     }

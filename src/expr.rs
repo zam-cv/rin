@@ -102,14 +102,14 @@ pub fn resolve_expr(
     match expression {
         Expr::Value(value) => {
             let n = set_number(&value, &type_value, &mut global.variables);
-            output.push_str(&format!("LOAD {n}\n{type_store} {name}\nCLEAR\n\n"));
+            output.push_str(&format!("LOAD {n}\n{type_store} {name}\n\n"));
         }
         Expr::Variable(var) => {
-            output.push_str(&format!("LOAD {}\n{type_store} {}\nCLEAR\n", var, name));
+            output.push_str(&format!("LOAD {var}\n{type_store} {name}\n"));
             global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::Deref(ptr_name) => {
-            output.push_str(&format!("LOADI {ptr_name}\n{type_store} {name}\nCLEAR\n"));
+            output.push_str(&format!("LOADI {ptr_name}\n{type_store} {name}\n"));
             global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::BinOp { lhs, op, rhs } => {
@@ -125,7 +125,7 @@ pub fn resolve_expr(
             };
 
             output.push_str(&result);
-            output.push_str(&format!("{type_store} {}\nCLEAR\n", &name));
+            output.push_str(&format!("\n{type_store} {name}\n"));
         }
     };
 
