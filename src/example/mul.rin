@@ -1,2 +1,6 @@
-var a = 5 * 6;
-print(a);
+var a = 1;
+var b = 1;
+
+if (a == b) {
+  print(a);
+}

@@ -19,14 +19,14 @@ bin_op = _{ add | subtract | multiply | divide }
 
 if_cond = { "if " ~ "(" ~ condition_if ~ ")" ~ "{" ~ instruction* ~ "}" }
 condition_if = _{ atom ~ comp_op_if ~ atom }
-comp_op_if = { diff | greater | less }
-diff = { "!=" }
+comp_op_if = { equal | greater | less }
 
 while_loop = { "while" ~ "(" ~ condition_while ~ ")" ~ "{" ~ instruction* ~ "}" }
 condition_while = _{ atom ~ comp_op_while ~ atom }
-comp_op_while = { equal | greater | less }
+comp_op_while = { diff | greater | less }
 
-equal= { "==" }
+diff = { "!=" }
+equal = { "==" }
 greater = { ">" }
 less = { "<" }
 

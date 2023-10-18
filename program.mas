@@ -104,26 +104,6 @@ SUB,	HEX 000
 	JUMPI SUB
 
 THEN_1,	HEX	000
-	JNS promedio
-	LOAD result
-	OUTPUT
-	CLEAR
-	STORE R
-	
-	LOAD N0
-	STORE sum
-	CLEAR
-	
-	CLEAR
-	STORE R
-	
-	LOAD N0
-	STORE i
-	CLEAR
-	
-	JumpI	THEN_1
-
-promedio,	HEX     000
 	CLEAR
 	STORE R
 	CLEAR
@@ -147,7 +127,23 @@ promedio,	HEX     000
 	
 	STORE result
 	CLEAR
-	JumpI   promedio
+	LOAD result
+	OUTPUT
+	CLEAR
+	STORE R
+	
+	LOAD N0
+	STORE sum
+	CLEAR
+	
+	CLEAR
+	STORE R
+	
+	LOAD N0
+	STORE i
+	CLEAR
+	
+	JumpI	THEN_1
 
 A,   DEC 0
 B,   DEC 0

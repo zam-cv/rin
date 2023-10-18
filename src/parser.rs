@@ -115,20 +115,13 @@ pub fn resolve_instructions(
             }
             Rule::loopp => {
                 let inner = pair.into_inner();
-                let mut block_output = String::new();
+                let mut block = String::new();
 
-                resolve_instructions(inner, global, &mut block_output)?;
-
-                let tab = block_output
-                    .lines()
-                    .map(|line| format!("\t{}", line))
-                    .collect::<Vec<String>>()
-                    .join("\n");
-
-                let loops = global.counts.whiles;
+                resolve_instructions(inner, global, &mut block)?;
+                let loops = global.counts.loops;
 
                 output.push_str(&format!(
-                    "LOOP_{loops},\tCLEAR\n{tab}\n\tJUMP LOOP_{loops}\n"
+                    "LOOP_{loops},	CLEAR\n\n{block}\nJUMP LOOP_{loops}\n"
                 ));
             }
             Rule::if_cond => {
@@ -150,27 +143,28 @@ pub fn resolve_instructions(
                     .ok_or_else(|| anyhow!("Missing valueB"))?
                     .as_str();
 
-                let mut block_output = String::new();
-                resolve_instructions(inner, global, &mut block_output)?;
-                let tab = block_output
-                    .lines()
-                    .map(|line| format!("\t{}", line))
-                    .collect::<Vec<String>>()
-                    .join("\n");
+                let mut block = String::new();
+                resolve_instructions(inner, global, &mut block)?;
+                // let tab = block_output
+                //     .lines()
+                //     .map(|line| format!("\t{}", line))
+                //     .collect::<Vec<String>>()
+                //     .join("\n");
 
                 let operator = match condition.as_str() {
                     ">" => "000",
-                    "!=" => "400",
+                    "==" => "400",
                     "<" => "800",
                     _ => return Err(anyhow!("Invalid condition")),
                 };
 
                 let ifs = global.counts.ifs;
-                output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1\n"));
-                global.functions.insert(
-                    format!("THEN_{ifs}"),
-                    format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"),
-                );
+                output.push_str(&format!("LOAD {var_a}\nSUBT {var_b}\nSKIPCOND {operator}\nJUMP BREAK_{ifs}\n\n{block}\nBREAK_{ifs},	CLEAR"));
+                // output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1\n"));
+                // global.functions.insert(
+                //     format!("THEN_{ifs}"),
+                //     format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"),
+                // );
 
                 global.counts.ifs += 1;
             }
@@ -239,8 +233,16 @@ pub fn generate(code: &str) -> Result<String> {
             "DIV".to_string(),
             format!(
                 "DIV,	HEX	000\n\tLOAD C\n\tADD B\n\tSTORE C\n\tLOAD R\n\tADD ONE\n\tSTORE R\n\tLOAD A\n\tSUBT C\n\tJUMPI DIV
+\nSUB,	HEX 000\n\tLOAD R\n\tSUBT ONE\n\tSTORE R\n\tLOAD A\n\tSUBT B\n\tJUMPI SUB"
+            ),
+        );
+    }
 
-SUB,	HEX 000\n\tLOAD R\n\tSUBT ONE\n\tSTORE R\n\tLOAD A\n\tSUBT B\n\tJUMPI SUB"
+    if global.counts.mul > 1 {
+        global.functions.insert(
+            "MUL".to_string(),
+            format!(
+                "MUL_ADD,\tHEX 000\n\tLOAD R\n\tADD B\n\tSTORE R\n\n\tLOAD COUNT\n\tSUBT ONE\n\tSTORE COUNT\n\tJUMPI MUL_ADD"
             ),
         );
     }
