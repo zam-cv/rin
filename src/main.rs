@@ -9,8 +9,8 @@ mod cli;
 mod parser;
 mod operations;
 mod expr;
-mod loops;
-mod functions;
+mod sentences;
+mod statements;
 
 fn program() -> Result<()> {
     let cli = Cli::parse();

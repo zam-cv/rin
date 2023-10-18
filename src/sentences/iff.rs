@@ -1,14 +1,14 @@
 use crate::parser::{resolve_instructions, Global, Rule};
 use anyhow::{anyhow, Result};
 
-pub fn while_loop(
+pub fn iff(
     pair: pest::iterators::Pair<Rule>,
     global: &mut Global,
     output: &mut String,
 ) -> Result<()> {
     let mut inner = pair.into_inner();
 
-    let var_n = inner
+    let var_a = inner
         .next()
         .ok_or_else(|| anyhow!("Missing valueA"))?
         .as_str();
@@ -19,7 +19,7 @@ pub fn while_loop(
         .as_str()
         .to_string();
 
-    let var_m = inner
+    let var_b = inner
         .next()
         .ok_or_else(|| anyhow!("Missing valueB"))?
         .as_str();
@@ -28,18 +28,16 @@ pub fn while_loop(
     resolve_instructions(inner, global, &mut block)?;
 
     let operator = match condition.as_str() {
-        "<" => "800",
-        "!=" => "400",
-        ">" => "000",
+        "<" => "000",
+        "==" => "400",
+        ">" => "800",
         _ => return Err(anyhow!("Invalid condition")),
     };
 
-    let loops = global.counts.whiles;
+    let ifs = global.counts.ifs;
+    output.push_str(&format!("LOAD {var_a}\nSUBT {var_b}\nSKIPCOND {operator}\nJUMP BREAK_{ifs}\n\n{block}BREAK_{ifs},	CLEAR\n\n"));
 
-    output.push_str(&format!(
-        "CLEAR\nSTORE R\n\nBEGIN_{loops}, JUMP NEXT_{loops}
-INIT_{loops},	CLEAR\n\n{block}\nNEXT_{loops},	LOAD {var_n}\n\tSUBT {var_m}\n\tSKIPCOND {operator}\n\tJUMP INIT_{loops}\n"));
+    global.counts.ifs += 1;
 
-    global.counts.whiles += 1;
     Ok(())
 }

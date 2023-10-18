@@ -2,7 +2,7 @@ program = _{ SOI ~ instruction* ~ EOI }
 statement = { ("var" ~ ident ~ (":" ~ type)? ~ "=" ~ values | "var" ~ "*" ~ ident ~ (":" ~ type)? ~ "->" ~ values) }
 
 values = _{ function_call | expr }
-instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop | function | if_cond | loopp ) }
+instruction = _{ ( statement ~ ";" | function_call ~ ";" | reassignment ~ ";" | dereference ~ ";" | while_loop | function | iff | loopp ) }
 reassignment = { ident ~ "=" ~ values }
 dereference = { "*" ~ ident ~ "=" ~ values }
 deref = { "*" ~ ident }
@@ -17,7 +17,7 @@ bin_op = _{ add | subtract | multiply | divide }
     multiply = { "*" }
     divide = { "/" }
 
-if_cond = { "if " ~ "(" ~ condition_if ~ ")" ~ "{" ~ instruction* ~ "}" }
+iff = { "if " ~ "(" ~ condition_if ~ ")" ~ "{" ~ instruction* ~ "}" }
 condition_if = _{ atom ~ comp_op_if ~ atom }
 comp_op_if = { equal | greater | less }
 

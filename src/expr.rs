@@ -1,6 +1,8 @@
-use crate::functions::returns_value;
-use crate::operations::{add, divide, multiply, subtract};
-use crate::parser::{Expr, Global, Op, Rule, DEFAULT_VALUE};
+use crate::{
+    operations::{add, divide, multiply, subtract},
+    parser::{Expr, Global, Op, Rule, DEFAULT_VALUE},
+    statements::functions::returns_value,
+};
 use anyhow::{anyhow, Result};
 use pest::{iterators::Pairs, pratt_parser::PrattParser};
 use std::collections::BTreeMap;
@@ -66,7 +68,7 @@ pub fn resolve_sub_expr(
                 format!("{ptr_name}_value"),
                 (type_value.clone(), DEFAULT_VALUE),
             );
-            output.push_str(&format!("\nLOADI {ptr_name}\nSTORE {ptr_name}_value\n"));
+            output.push_str(&format!("LOADI {ptr_name}\nSTORE {ptr_name}_value\n"));
             format!("{ptr_name}_value")
         }
         Expr::BinOp { lhs, op, rhs } => {
@@ -100,14 +102,14 @@ pub fn resolve_expr(
     match expression {
         Expr::Value(value) => {
             let n = set_number(&value, &type_value, &mut global.variables);
-            output.push_str(&format!("\nLOAD {n}\n{type_store} {name}\nCLEAR\n\n"));
+            output.push_str(&format!("LOAD {n}\n{type_store} {name}\nCLEAR\n\n"));
         }
         Expr::Variable(var) => {
-            output.push_str(&format!("\nLOAD {}\n{type_store} {}\nCLEAR\n", var, name));
+            output.push_str(&format!("LOAD {}\n{type_store} {}\nCLEAR\n", var, name));
             global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::Deref(ptr_name) => {
-            output.push_str(&format!("\nLOADI {ptr_name}\n{type_store} {name}\nCLEAR\n"));
+            output.push_str(&format!("LOADI {ptr_name}\n{type_store} {name}\nCLEAR\n"));
             global.variables.insert(name, (type_value, DEFAULT_VALUE));
         }
         Expr::BinOp { lhs, op, rhs } => {
@@ -156,8 +158,7 @@ pub fn assign(
                 .as_str()
                 .to_string();
 
-            output
-                .push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
+            output.push_str(&format!("CLEAR\nLOADI {ptr_name}\nSTORE {ident}\n\n"));
         }
         Rule::expr => {
             let expr = parse_expr(value_pair.into_inner());

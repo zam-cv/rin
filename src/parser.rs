@@ -1,7 +1,15 @@
-use crate::expr::{assign, parse_expr, resolve_expr};
-use crate::functions::{function, returns_value};
-use crate::loops::while_loop;
-use anyhow::{anyhow, Result};
+use crate::{
+    expr::assign,
+    sentences::{
+        iff::iff,
+        loops::{loopp, while_loop},
+    },
+    statements::{
+        functions::{function, function_call},
+        variable::variable,
+    },
+};
+use anyhow::Result;
 use pest::Parser;
 use std::collections::BTreeMap;
 
@@ -63,43 +71,7 @@ pub fn resolve_instructions(
     for pair in parsed {
         match pair.as_rule() {
             Rule::statement => {
-                let mut inner = pair.into_inner();
-
-                let ident = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing identifier"))?
-                    .as_str()
-                    .to_string();
-
-                let (type_value, value_pair) = if 2 == inner.clone().count() {
-                    let type_value = inner
-                        .next()
-                        .ok_or_else(|| anyhow!("Missing type"))?
-                        .as_str()
-                        .to_string();
-
-                    let value_pair = inner.next().ok_or_else(|| anyhow!("Missing value"))?;
-
-                    (type_value, value_pair)
-                } else {
-                    (
-                        "DEC".to_string(),
-                        inner.next().ok_or_else(|| anyhow!("Missing value"))?,
-                    )
-                };
-
-                match value_pair.as_rule() {
-                    Rule::expr => {
-                        let expr = parse_expr(value_pair.into_inner());
-                        output.push_str("CLEAR\nSTORE R\n");
-
-                        resolve_expr(expr, &ident, &type_value, global, output, STORE)?;
-                    }
-                    Rule::function_call => returns_value(value_pair, &ident, output)?,
-                    _ => return Err(anyhow!("Invalid value assignment")),
-                }
-
-                global.variables.insert(ident, (type_value, DEFAULT_VALUE));
+                variable(pair, global, output)?;
             }
             Rule::reassignment => {
                 assign(pair, global, output, STORE)?;
@@ -114,81 +86,13 @@ pub fn resolve_instructions(
                 function(pair, global)?;
             }
             Rule::loopp => {
-                let inner = pair.into_inner();
-                let mut block = String::new();
-
-                resolve_instructions(inner, global, &mut block)?;
-                let loops = global.counts.loops;
-
-                output.push_str(&format!(
-                    "LOOP_{loops},	CLEAR\n\n{block}\nJUMP LOOP_{loops}\n"
-                ));
+                loopp(pair, global, output)?;
             }
-            Rule::if_cond => {
-                let mut inner = pair.into_inner();
-
-                let var_a = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing valueA"))?
-                    .as_str();
-
-                let condition = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing condition"))?
-                    .as_str()
-                    .to_string();
-
-                let var_b = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing valueB"))?
-                    .as_str();
-
-                let mut block = String::new();
-                resolve_instructions(inner, global, &mut block)?;
-                // let tab = block_output
-                //     .lines()
-                //     .map(|line| format!("\t{}", line))
-                //     .collect::<Vec<String>>()
-                //     .join("\n");
-
-                let operator = match condition.as_str() {
-                    ">" => "000",
-                    "==" => "400",
-                    "<" => "800",
-                    _ => return Err(anyhow!("Invalid condition")),
-                };
-
-                let ifs = global.counts.ifs;
-                output.push_str(&format!("LOAD {var_a}\nSUBT {var_b}\nSKIPCOND {operator}\nJUMP BREAK_{ifs}\n\n{block}\nBREAK_{ifs},	CLEAR"));
-                // output.push_str(&format!("LOAD {var_a}\nSTORE A\nLOAD {var_b}\nSTORE B\n\nLOAD A\nSUBT B\nSKIPCOND {operator}\nJNS THEN_1\n"));
-                // global.functions.insert(
-                //     format!("THEN_{ifs}"),
-                //     format!("THEN_{ifs},\tHEX\t000\n{tab}\n\tJumpI\tTHEN_{ifs}"),
-                // );
-
-                global.counts.ifs += 1;
+            Rule::iff => {
+                iff(pair, global, output)?;
             }
             Rule::function_call => {
-                let mut inner = pair.into_inner();
-
-                let ident = inner
-                    .next()
-                    .ok_or_else(|| anyhow!("Missing identifier"))?
-                    .as_str();
-
-                match ident {
-                    "print" => {
-                        let params = inner
-                            .next()
-                            .ok_or_else(|| anyhow!("Missing parameters"))?
-                            .as_str();
-
-                        output.push_str(&format!("LOAD {params}\nOUTPUT\n"));
-                    }
-                    _ => {
-                        output.push_str(&format!("JNS {ident}\n"));
-                    }
-                }
+                function_call(pair, output)?;
             }
             _ => {}
         }
