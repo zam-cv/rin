@@ -63,7 +63,7 @@ pub fn function_call(pair: pest::iterators::Pair<Rule>, output: &mut String) -> 
             output.push_str(&format!("LOAD {params}\nOUTPUT\n"));
         }
         _ => {
-            output.push_str(&format!("JNS FN_add\n"));
+            output.push_str(&format!("JNS FN_{ident}\n"));
         }
     };
 
